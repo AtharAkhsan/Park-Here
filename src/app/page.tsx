@@ -1,65 +1,280 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import {
+  AppView,
+  ParkingSubState,
+  ParkingSlot,
+  ParkingSession,
+  INITIAL_SLOTS,
+  SLOT_LOCATIONS,
+  RATE_PER_HOUR,
+} from "./types";
+import ParkingMapView from "./components/ParkingMapView";
+import SlotDetailView from "./components/SlotDetailView";
+import ActiveParkingView from "./components/ActiveParkingView";
+import CheckoutView from "./components/CheckoutView";
+import SuccessView from "./components/SuccessView";
 import Image from "next/image";
 
 export default function Home() {
+  // ─── State Machine ───────────────────────────────────
+  const [currentView, setCurrentView] = useState<AppView>("map");
+  const [parkingSubState, setParkingSubState] =
+    useState<ParkingSubState>("navigating");
+  const [slots, setSlots] = useState<ParkingSlot[]>(INITIAL_SLOTS);
+  const [session, setSession] = useState<ParkingSession>({
+    slotId: "",
+    slotLabel: "",
+    location: "",
+    rate: RATE_PER_HOUR,
+    startTime: null,
+    endTime: null,
+    elapsedSeconds: 0,
+  });
+  const [paymentMethod, setPaymentMethod] = useState<string>("gopay");
+
+  // Timer
+  useEffect(() => {
+    if (currentView !== "parking" || parkingSubState !== "active") return;
+    const interval = setInterval(() => {
+      setSession((prev) => ({
+        ...prev,
+        elapsedSeconds: prev.elapsedSeconds + 1,
+      }));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [currentView, parkingSubState]);
+
+  // ─── Slot counts ────────────────────────────────────
+  const emptyCount = slots.filter((s) => s.status === "empty").length;
+  const filledCount = slots.filter(
+    (s) => s.status === "filled" || s.status === "reserved" || s.status === "active"
+  ).length;
+
+  // ─── Is session active? (locks the map) ─────────────
+  const isSessionActive = ["parking", "checkout", "success"].includes(currentView);
+
+  // ─── Handlers ───────────────────────────────────────
+  const handleSlotClick = useCallback((slot: ParkingSlot) => {
+    if (slot.status !== "empty") return;
+    if (isSessionActive) return; // Prevent selecting another slot
+    setSession({
+      slotId: slot.id,
+      slotLabel: slot.label,
+      location: SLOT_LOCATIONS[slot.label] || "Area Parkir",
+      rate: RATE_PER_HOUR,
+      startTime: null,
+      endTime: null,
+      elapsedSeconds: 0,
+    });
+    setCurrentView("detail");
+  }, [isSessionActive]);
+
+  const handleReserve = useCallback(() => {
+    setSlots((prev) =>
+      prev.map((s) =>
+        s.id === session.slotId ? { ...s, status: "reserved" as const } : s
+      )
+    );
+    setParkingSubState("navigating");
+    setCurrentView("parking");
+  }, [session.slotId]);
+
+  const handleArrived = useCallback(() => {
+    const now = new Date();
+    setSession((prev) => ({ ...prev, startTime: now, elapsedSeconds: 0 }));
+    setSlots((prev) =>
+      prev.map((s) =>
+        s.id === session.slotId ? { ...s, status: "active" as const } : s
+      )
+    );
+    setParkingSubState("active");
+  }, [session.slotId]);
+
+  const handleFinishParking = useCallback(() => {
+    const now = new Date();
+    setSession((prev) => ({ ...prev, endTime: now }));
+    setCurrentView("checkout");
+  }, []);
+
+  const handlePay = useCallback(
+    (method: string) => {
+      setPaymentMethod(method);
+      setSlots((prev) =>
+        prev.map((s) =>
+          s.id === session.slotId ? { ...s, status: "empty" as const } : s
+        )
+      );
+      setCurrentView("success");
+    },
+    [session.slotId]
+  );
+
+  const handleReset = useCallback(() => {
+    setSession({
+      slotId: "",
+      slotLabel: "",
+      location: "",
+      rate: RATE_PER_HOUR,
+      startTime: null,
+      endTime: null,
+      elapsedSeconds: 0,
+    });
+    setParkingSubState("navigating");
+    setPaymentMethod("gopay");
+    setCurrentView("map");
+  }, []);
+
+  const handleBackToMap = useCallback(() => {
+    setCurrentView("map");
+  }, []);
+
+  // ─── Secondary panel content ──
+  const renderSecondaryView = () => {
+    switch (currentView) {
+      case "detail":
+        return (
+          <SlotDetailView
+            slotLabel={session.slotLabel}
+            location={session.location}
+            onReserve={handleReserve}
+            onBack={handleBackToMap}
+          />
+        );
+      case "parking":
+        return (
+          <ActiveParkingView
+            slotLabel={session.slotLabel}
+            subState={parkingSubState}
+            elapsedSeconds={session.elapsedSeconds}
+            onArrived={handleArrived}
+            onFinish={handleFinishParking}
+          />
+        );
+      case "checkout":
+        return (
+          <CheckoutView
+            slotLabel={session.slotLabel}
+            startTime={session.startTime!}
+            endTime={session.endTime!}
+            totalSeconds={session.elapsedSeconds}
+            onPay={handlePay}
+          />
+        );
+      case "success":
+        return (
+          <SuccessView
+            slotLabel={session.slotLabel}
+            startTime={session.startTime!}
+            endTime={session.endTime!}
+            totalSeconds={session.elapsedSeconds}
+            paymentMethod={paymentMethod}
+            onReset={handleReset}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  const hasSecondaryView = currentView !== "map";
+
+  // ─── Logo component ────────────────────────────────
+  const Logo = ({ size = 28 }: { size?: number }) => (
+    <Image src="/logo.svg" alt="PARK-HERE" width={size} height={size} className="flex-shrink-0" />
+  );
+
+  // ─── Render ────────────────────────────────────────
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <>
+      {/* ═══ MOBILE LAYOUT (< md) ═══ */}
+      <main className="md:hidden w-full max-w-[430px] mx-auto min-h-screen bg-white relative overflow-hidden flex flex-col">
+        {/* App chrome / top bar */}
+        <div className="flex-shrink-0 px-5 pt-3 pb-2 flex items-center justify-between border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <Logo size={24} />
+            <span className="text-[13px] font-black tracking-tight text-gray-900">
+              PARK-HERE
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+            <span className="text-[10px] font-medium text-gray-400">Online</span>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        {/* View container — full screen on mobile */}
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {currentView === "map" ? (
+            <ParkingMapView
+              slots={slots}
+              onSlotClick={handleSlotClick}
+              emptyCount={emptyCount}
+              filledCount={filledCount}
+              disabled={false}
+              selectedSlotId={undefined}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          ) : (
+            renderSecondaryView()
+          )}
+        </div>
+
+        <div className="flex-shrink-0 h-2 bg-white" />
+      </main>
+
+      {/* ═══ DESKTOP LAYOUT (≥ md) ═══ */}
+      <main className="hidden md:flex w-full min-h-screen bg-white">
+        {/* Left panel — Parking Map (always visible) */}
+        <div className="w-[50%] max-w-[560px] flex-shrink-0 bg-white border-r border-gray-200 flex flex-col">
+          {/* Top bar */}
+          <div className="flex-shrink-0 px-6 pt-4 pb-3 flex items-center justify-between border-b border-gray-100">
+            <div className="flex items-center gap-2.5">
+              <Logo size={28} />
+              <span className="text-[14px] font-black tracking-tight text-gray-900">
+                PARK-HERE
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+              <span className="text-[11px] font-medium text-gray-400">Online</span>
+            </div>
+          </div>
+
+          {/* Map always rendered */}
+          <div className="flex-1 overflow-y-auto">
+            <ParkingMapView
+              slots={slots}
+              onSlotClick={handleSlotClick}
+              emptyCount={emptyCount}
+              filledCount={filledCount}
+              disabled={isSessionActive}
+              selectedSlotId={currentView !== "map" ? session.slotId : undefined}
+            />
+          </div>
+        </div>
+
+        {/* Right panel — Detail / Action (fills remaining space) */}
+        <div className="flex-1 flex flex-col min-w-0 bg-gray-50/50">
+          {hasSecondaryView ? (
+            <div className="flex-1 flex flex-col bg-white">
+              {renderSecondaryView()}
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-center px-8 animate-fadeIn">
+              <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center mb-6">
+                <Logo size={40} />
+              </div>
+              <h2 className="text-xl font-bold text-gray-800 mb-2">
+                Pilih Slot Parkir
+              </h2>
+              <p className="text-sm text-gray-400 max-w-[280px] leading-relaxed">
+                Klik salah satu slot yang tersedia di panel kiri untuk melihat detail dan melakukan reservasi.
+              </p>
+            </div>
+          )}
         </div>
       </main>
-    </div>
+    </>
   );
 }
