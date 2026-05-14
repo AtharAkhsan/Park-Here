@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🅿️ PARK-HERE: Smart Parking Tracker
 
-## Getting Started
+PARK-HERE is a modern, web-based prototype for a smart parking management system. It allows users to view real-time parking availability, reserve slots, track active parking sessions, and seamlessly handle checkout and billing.
 
-First, run the development server:
+## ✨ Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Interactive Parking Map**: Real-time visual representation of parking slots categorized by status (Available, Occupied, Reserved, Active).
+- **Responsive Split-View Architecture**: 
+  - **Desktop**: Side-by-side layout ensuring the parking map remains contextually available while managing reservations on the right pane.
+  - **Mobile**: Seamless single-column view optimized for mobile devices.
+- **Session Tracking**: Live timer tracking exact parking duration down to the second.
+- **Automated Billing**: Dynamic cost calculation based on elapsed time (Rp 3.000/hour).
+- **Modern UI/UX**: Clean light theme with glassmorphism elements, intuitive color coding, and smooth view transitions.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Framework**: [Next.js](https://nextjs.org/) (App Router)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **Icons**: [Lucide React](https://lucide.dev/)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🚀 Getting Started
 
-## Learn More
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. **Run the development server:**
+   ```bash
+   npm run dev
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. **Open the application:**
+   Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📖 Application Flow
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Select a Slot**: Click on an available (Kosong) slot on the map.
+2. **Reserve**: View slot details and click "Reservasi Slot".
+3. **Arrive**: Once at the parking location, click "Saya Sudah Sampai" to begin the live parking timer.
+4. **Checkout**: Click "Selesai Parkir" to end the session. The system calculates the total duration and cost.
+5. **Pay**: Select a payment method and confirm to complete the transaction.
