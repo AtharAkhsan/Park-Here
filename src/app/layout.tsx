@@ -12,6 +12,11 @@ export const metadata: Metadata = {
   title: "PARK-HERE — Smart Parking Tracker",
   description:
     "Aplikasi pelacak parkir cerdas untuk melihat status slot parkir real-time, reservasi tempat, dan pembayaran digital.",
+  icons: {
+    icon: "/logo.svg",
+    shortcut: "/logo.svg",
+    apple: "/logo.svg",
+  },
 };
 
 export default function RootLayout({
