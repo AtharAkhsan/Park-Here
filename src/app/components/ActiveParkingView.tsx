@@ -7,6 +7,7 @@ interface ActiveParkingViewProps {
   slotLabel: string;
   subState: ParkingSubState;
   elapsedSeconds: number;
+  locationName?: string;
   onArrived: () => void;
   onFinish: () => void;
 }
@@ -27,6 +28,7 @@ export default function ActiveParkingView({
   slotLabel,
   subState,
   elapsedSeconds,
+  locationName = "FILKOM UB",
   onArrived,
   onFinish,
 }: ActiveParkingViewProps) {
@@ -71,7 +73,7 @@ export default function ActiveParkingView({
             </div>
             <p className="text-xl font-black text-gray-900">Slot {slotLabel}</p>
             <p className="text-sm text-gray-400 mt-1">
-              Lantai 1 — Area A
+              {locationName} — Lantai 1
             </p>
           </div>
         </div>

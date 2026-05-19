@@ -1,7 +1,7 @@
 "use client";
 
 import { ParkingSlot } from "../types";
-import { Car, MapPin } from "lucide-react";
+import { Car, MapPin, ChevronLeft } from "lucide-react";
 
 interface ParkingMapViewProps {
   slots: ParkingSlot[];
@@ -10,6 +10,9 @@ interface ParkingMapViewProps {
   filledCount: number;
   disabled?: boolean;
   selectedSlotId?: string;
+  locationName?: string;
+  locationSubtitle?: string;
+  onBack?: () => void;
 }
 
 export default function ParkingMapView({
@@ -19,6 +22,9 @@ export default function ParkingMapView({
   filledCount,
   disabled = false,
   selectedSlotId,
+  locationName = "FILKOM UB",
+  locationSubtitle = "Lantai 1 — Area A",
+  onBack,
 }: ParkingMapViewProps) {
   const getSlotClass = (slot: ParkingSlot) => {
     if (selectedSlotId && slot.id === selectedSlotId) return "slot-reserved";
@@ -35,16 +41,25 @@ export default function ParkingMapView({
     }
   };
 
-  const rows = [
-    slots.filter((s) => s.label.startsWith("A")),
-    slots.filter((s) => s.label.startsWith("B")),
-    slots.filter((s) => s.label.startsWith("C")),
-  ];
+  // Group slots by row_letter
+  const rowLetters = [...new Set(slots.map((s) => s.row_letter || s.label.charAt(0)))].sort();
+  const rows = rowLetters.map((letter) =>
+    slots.filter((s) => (s.row_letter || s.label.charAt(0)) === letter)
+  );
 
   return (
     <div className="view-enter flex flex-col h-full">
       {/* Header */}
       <div className="px-5 pt-6 pb-4">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1.5 text-gray-400 hover:text-gray-900 transition-colors mb-3"
+          >
+            <ChevronLeft size={18} />
+            <span className="text-sm font-medium">Semua Lokasi</span>
+          </button>
+        )}
         <div className="flex items-center gap-2 mb-1">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
           <span className="text-[11px] font-semibold tracking-widest uppercase text-gray-400">
@@ -52,10 +67,10 @@ export default function ParkingMapView({
           </span>
         </div>
         <h1 className="text-[22px] font-black tracking-tight leading-tight text-gray-900">
-          FILKOM UB
+          {locationName}
         </h1>
         <p className="text-gray-400 text-sm font-medium mt-0.5">
-          Lantai 1 — Area A
+          {locationSubtitle}
         </p>
       </div>
 
@@ -119,7 +134,7 @@ export default function ParkingMapView({
             {rows.map((row, rowIdx) => (
               <div key={rowIdx}>
                 <div className="flex items-center gap-1.5 mb-1.5">
-                  <span className="text-[10px] font-bold text-gray-300">{String.fromCharCode(65 + rowIdx)}</span>
+                  <span className="text-[10px] font-bold text-gray-300">{rowLetters[rowIdx]}</span>
                   <div className="flex-1 h-px bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-6 gap-2">

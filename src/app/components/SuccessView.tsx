@@ -9,6 +9,7 @@ interface SuccessViewProps {
   endTime: Date;
   totalSeconds: number;
   paymentMethod: string;
+  locationName?: string;
   onReset: () => void;
 }
 
@@ -33,7 +34,7 @@ const METHOD_NAMES: Record<string, string> = {
   gopay: "GoPay", ovo: "OVO", dana: "DANA", cc: "Kartu Kredit",
 };
 
-export default function SuccessView({ slotLabel, startTime, endTime, totalSeconds, paymentMethod, onReset }: SuccessViewProps) {
+export default function SuccessView({ slotLabel, startTime, endTime, totalSeconds, paymentMethod, locationName = "FILKOM UB", onReset }: SuccessViewProps) {
   const total = calculateTotal(totalSeconds);
   const txId = `PH-${Date.now().toString(36).toUpperCase()}`;
 
@@ -62,7 +63,7 @@ export default function SuccessView({ slotLabel, startTime, endTime, totalSecond
           <div className="p-4 space-y-3 stagger-children">
             {[
               { icon: MapPin, label: "Slot", value: slotLabel },
-              { icon: MapPin, label: "Lokasi", value: "FILKOM UB — Lt. 1" },
+              { icon: MapPin, label: "Lokasi", value: `${locationName} — Lt. 1` },
             ].map((item, i) => (
               <div key={i} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

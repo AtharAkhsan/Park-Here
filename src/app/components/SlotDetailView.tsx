@@ -6,6 +6,8 @@ import { MapPin, Clock, Banknote, ChevronLeft, ShieldCheck } from "lucide-react"
 interface SlotDetailViewProps {
   slotLabel: string;
   location: string;
+  ratePerHour?: number;
+  operatingHours?: string;
   onReserve: () => void;
   onBack: () => void;
 }
@@ -13,6 +15,8 @@ interface SlotDetailViewProps {
 export default function SlotDetailView({
   slotLabel,
   location,
+  ratePerHour = RATE_PER_HOUR,
+  operatingHours = "06:00 — 22:00 WIB",
   onReserve,
   onBack,
 }: SlotDetailViewProps) {
@@ -75,7 +79,7 @@ export default function SlotDetailView({
               Tarif
             </p>
             <p className="text-sm font-bold text-gray-900">
-              Rp {RATE_PER_HOUR.toLocaleString("id-ID")}/jam
+              Rp {ratePerHour.toLocaleString("id-ID")}/jam
             </p>
           </div>
         </div>
@@ -88,7 +92,7 @@ export default function SlotDetailView({
             <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">
               Jam Operasional
             </p>
-            <p className="text-sm font-bold text-gray-900">06:00 — 22:00 WIB</p>
+            <p className="text-sm font-bold text-gray-900">{operatingHours}</p>
           </div>
         </div>
 
