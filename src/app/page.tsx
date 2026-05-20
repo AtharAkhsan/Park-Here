@@ -18,6 +18,7 @@ import CheckoutView from "./components/CheckoutView";
 import SuccessView from "./components/SuccessView";
 import Image from "next/image";
 import { User } from "@supabase/supabase-js";
+import { LogOut, Mail, Lock, UserPlus, LogIn, Eye, EyeOff } from "lucide-react";
 
 export default function Home() {
   // ─── State Machine ───────────────────────────────────
@@ -27,6 +28,10 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isRegister, setIsRegister] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authSuccess, setAuthSuccess] = useState<string | null>(null);
+  const [authSubmitting, setAuthSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [currentView, setCurrentView] = useState<AppView>("locations");
   const [parkingSubState, setParkingSubState] =
     useState<ParkingSubState>("navigating");
@@ -108,6 +113,56 @@ export default function Home() {
         subscription.unsubscribe();
       };
   }, []);
+
+  // ─── Fetch Active Session on Login ──────────────────
+  useEffect(() => {
+    async function fetchActiveSession() {
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from("parking_sessions")
+        .select("*, parking_slots(*), parking_locations(*)")
+        .eq("user_id", user.id)
+        .in("status", ["active", "reserved"])
+        .order("start_time", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching active session:", error);
+        return;
+      }
+
+      if (data) {
+        // Restore Session
+        const startTime = new Date(data.start_time);
+        const elapsedSeconds = data.status === "active" 
+          ? Math.max(0, Math.floor((new Date().getTime() - startTime.getTime()) / 1000))
+          : 0;
+        
+        setSession({
+          slotId: data.slot_id,
+          slotLabel: data.parking_slots?.label || "",
+          location: data.parking_slots?.sublocation || "Area Parkir",
+          rate: data.parking_locations?.rate_per_hour || RATE_PER_HOUR,
+          startTime: data.status === "active" ? startTime : null,
+          endTime: null,
+          elapsedSeconds,
+        });
+        
+        // Restore Location context
+        if (data.parking_locations) {
+          setSelectedLocation(data.parking_locations);
+          fetchSlotsForLocation(data.parking_locations.id);
+        }
+        
+        setParkingSubState(data.status === "active" ? "active" : "navigating");
+        setCurrentView("parking");
+      }
+    }
+    
+    fetchActiveSession();
+  }, [user]);
 
   // ─── Fetch Slots for Selected Location ──────────────
   const fetchSlotsForLocation = useCallback(async (locationId: string) => {
@@ -199,6 +254,20 @@ export default function Home() {
       .update({ status: "reserved" })
       .eq("id", session.slotId);
 
+    // Create parking session with reserved status
+    const now = new Date();
+    const { error: insertError } = await supabase.from("parking_sessions").insert({
+      user_id: user?.id,
+      slot_id: session.slotId,
+      location_id: selectedLocation?.id,
+      start_time: now.toISOString(),
+      status: "reserved",
+    });
+
+    if (insertError) {
+      console.error("Error inserting reserved session:", insertError);
+    }
+
     setSlots((prev) =>
       prev.map((s) =>
         s.id === session.slotId ? { ...s, status: "reserved" as const } : s
@@ -206,7 +275,7 @@ export default function Home() {
     );
     setParkingSubState("navigating");
     setCurrentView("parking");
-  }, [session.slotId]);
+  }, [session.slotId, selectedLocation, user]);
 
   const handleArrived = useCallback(async () => {
     const now = new Date();
@@ -218,13 +287,20 @@ export default function Home() {
       .update({ status: "active" })
       .eq("id", session.slotId);
 
-    // Create parking session in Supabase
-    await supabase.from("parking_sessions").insert({
-      slot_id: session.slotId,
-      location_id: selectedLocation?.id,
-      start_time: now.toISOString(),
-      status: "active",
-    });
+    // Update existing parking session status to active
+    const { error: updateError } = await supabase
+      .from("parking_sessions")
+      .update({
+        start_time: now.toISOString(),
+        status: "active",
+      })
+      .eq("user_id", user?.id)
+      .eq("slot_id", session.slotId)
+      .eq("status", "reserved");
+
+    if (updateError) {
+      console.error("Error updating active session:", updateError);
+    }
 
     setSlots((prev) =>
       prev.map((s) =>
@@ -232,7 +308,7 @@ export default function Home() {
       )
     );
     setParkingSubState("active");
-  }, [session.slotId, selectedLocation]);
+  }, [session.slotId, user]);
 
   const handleFinishParking = useCallback(() => {
     const now = new Date();
@@ -299,26 +375,31 @@ export default function Home() {
 
   // ─── Secondary panel content ──
   const handleAuth = async () => {
+    setAuthError(null);
+    setAuthSuccess(null);
+    setAuthSubmitting(true);
     if (isRegister) {
       const { error } = await supabase.auth.signUp({
         email,
         password,
       });
 
+      setAuthSubmitting(false);
       if (error) {
-        alert(error.message);
+        setAuthError(error.message);
         return;
       }
 
-      alert("Check your email for verification.");
+      setAuthSuccess("Cek email kamu untuk verifikasi akun.");
     } else {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
+      setAuthSubmitting(false);
       if (error) {
-        alert(error.message);
+        setAuthError(error.message);
         return;
       }
     }
@@ -326,6 +407,7 @@ export default function Home() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    handleReset();
   };
   const renderSecondaryView = () => {
     switch (currentView) {
@@ -382,7 +464,7 @@ export default function Home() {
 
   // ─── Logo component ────────────────────────────────
   const Logo = ({ size = 28 }: { size?: number }) => (
-    <Image src="/logo.svg" alt="PARK-HERE" width={size} height={size} className="flex-shrink-0" />
+    <Image src="/logo.svg" alt="PARK-HERE" width={size} height={size} className="flex-shrink-0" priority />
   );
 
   if (authLoading) {
@@ -395,50 +477,134 @@ export default function Home() {
 
 if (!user) {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-center gap-2 mb-6">
-          <Logo size={28} />
-          <h1 className="text-xl font-black">PARK-HERE</h1>
+    <main className="min-h-screen w-full flex items-center justify-center auth-background px-4 py-8">
+      <div className="w-full max-w-[420px] relative z-10 animate-scaleIn">
+        {/* Logo area */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-16 h-16 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center justify-center mb-4 animate-float">
+            <Logo size={36} />
+          </div>
+          <h1 className="text-2xl font-black text-gray-900 tracking-tight">PARK-HERE</h1>
+          <p className="text-gray-400 text-sm mt-1 font-medium">Smart Parking System</p>
         </div>
 
-        <h2 className="text-lg font-semibold mb-4">
-          {isRegister ? "Create Account" : "Login"}
-        </h2>
+        {/* Auth card */}
+        <div className="auth-card rounded-3xl p-6 sm:p-8 overflow-hidden">
+          <div key={isRegister ? "register" : "login"} className="animate-fadeIn">
+            <h2 className="text-xl font-bold text-gray-900 mb-1">
+              {isRegister ? "Buat Akun Baru" : "Selamat Datang"}
+            </h2>
+            <p className="text-gray-400 text-sm mb-6">
+              {isRegister ? "Daftarkan akunmu untuk mulai parkir" : "Masuk ke akunmu untuk melanjutkan"}
+            </p>
 
-        <div className="space-y-3">
-          <input
-            type="email"
-            placeholder="Email"
-            className="w-full border rounded-xl px-4 py-3"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+            {/* Error/Success messages */}
+            {authError && (
+              <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm animate-fadeIn">
+                {authError}
+              </div>
+            )}
+            {authSuccess && (
+              <div className="mb-4 p-3 rounded-xl bg-green-50 border border-green-100 text-green-600 text-sm animate-fadeIn">
+                {authSuccess}
+              </div>
+            )}
 
-          <input
-            type="password"
-            placeholder="Password"
-            className="w-full border rounded-xl px-4 py-3"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+            <div className="space-y-4">
+              <div className="relative">
+                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  id="auth-email"
+                  type="email"
+                  placeholder="Alamat email"
+                  className="w-full auth-input rounded-xl pl-11 pr-4 py-3.5 text-sm"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
+                />
+              </div>
+
+              <div className="relative">
+                <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  id="auth-password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Kata sandi"
+                  className="w-full auth-input rounded-xl pl-11 pr-11 py-3.5 text-sm"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+
+              <button
+                id="btn-auth"
+                onClick={handleAuth}
+                disabled={authSubmitting || !email || !password}
+                className="w-full auth-btn rounded-xl py-3.5 text-[15px] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {authSubmitting ? (
+                  <div className="w-5 h-5 border-2 border-gray-400 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    {isRegister ? <UserPlus size={18} /> : <LogIn size={18} />}
+                    {isRegister ? "Daftar" : "Masuk"}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div className="auth-divider my-6">atau</div>
 
           <button
-            onClick={handleAuth}
-            className="w-full bg-black text-white rounded-xl py-3 font-medium"
-          >
-            {isRegister ? "Register" : "Login"}
-          </button>
-
-          <button
-            onClick={() => setIsRegister((prev) => !prev)}
-            className="w-full text-sm text-gray-500"
+            onClick={() => {
+              setIsRegister((prev) => !prev);
+              setAuthError(null);
+              setAuthSuccess(null);
+            }}
+            className="w-full text-sm text-gray-500 hover:text-gray-800 transition-all py-2 group"
           >
             {isRegister
-              ? "Already have an account? Login"
-              : "No account? Register"}
+              ? <>Sudah punya akun? <span className="font-bold text-gray-900 inline-block transition-transform duration-200 group-hover:scale-110 group-hover:text-black">Masuk</span></>
+              : <>Belum punya akun? <span className="font-bold text-gray-900 inline-block transition-transform duration-200 group-hover:scale-110 group-hover:text-black">Daftar</span></>}
           </button>
         </div>
+
+        {/* Demo Credentials */}
+        <div className="mt-5">
+          <p className="text-center text-gray-400 text-[11px] font-medium uppercase tracking-wider mb-2.5">Demo Credentials</p>
+          <button
+            onClick={() => {
+              setEmail("demo@park.here");
+              setPassword("demoparkhere321");
+              setAuthError(null);
+              setAuthSuccess(null);
+            }}
+            className="w-full glass-card rounded-xl p-3.5 flex items-center gap-3 hover:bg-gray-50 transition-all cursor-pointer border border-gray-100"
+          >
+            <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+              <Mail size={16} className="text-gray-500" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-bold text-gray-900">Demo</p>
+              <p className="text-xs text-gray-400">demo@park.here</p>
+            </div>
+          </button>
+        </div>
+
+        {/* Footer */}
+        <p className="text-center text-gray-300 text-xs mt-6">
+          © 2026 PARK-HERE. All rights reserved.
+        </p>
       </div>
     </main>
   );
@@ -466,8 +632,9 @@ if (!user) {
 
             <button
               onClick={handleLogout}
-              className="text-xs text-gray-500 hover:text-black"
+              className="btn-logout"
             >
+              <LogOut size={13} />
               Logout
             </button>
           </div>
@@ -523,8 +690,9 @@ if (!user) {
 
               <button
                 onClick={handleLogout}
-                className="text-xs text-gray-500 hover:text-black"
+                className="btn-logout"
               >
+                <LogOut size={13} />
                 Logout
               </button>
             </div>

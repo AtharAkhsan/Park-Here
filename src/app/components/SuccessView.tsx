@@ -31,7 +31,7 @@ function calculateTotal(seconds: number): number {
 }
 
 const METHOD_NAMES: Record<string, string> = {
-  gopay: "GoPay", ovo: "OVO", dana: "DANA", cc: "Kartu Kredit",
+  gopay: "GoPay", ovo: "OVO", dana: "DANA", qris: "QRIS",
 };
 
 export default function SuccessView({ slotLabel, startTime, endTime, totalSeconds, paymentMethod, locationName = "FILKOM UB", onReset }: SuccessViewProps) {

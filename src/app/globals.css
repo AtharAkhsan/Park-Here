@@ -10,7 +10,7 @@
   --muted-foreground: #6b6b6b;
   --success: #22c55e;
   --empty-slot: #f0f1f3;
-  --filled-slot: #e4e4e7;
+  --filled-slot: #fde2e2;
   --reserved-slot: #dbeafe;
   --active-slot: #111111;
 }
@@ -83,6 +83,16 @@ body {
   50% { box-shadow: 0 0 40px rgba(0,0,0,0.06); }
 }
 
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 .animate-fadeIn {
   animation: fadeIn 0.4s ease-out forwards;
 }
@@ -109,6 +119,111 @@ body {
 
 .animate-glow {
   animation: glow 3s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ═══ AUTH PAGE STYLES ═══ */
+.auth-background {
+  background: #f5f5f7;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-card {
+  background: #ffffff;
+  border: 1px solid #e8e8eb;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06),
+              0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.auth-input {
+  background: #f5f5f7;
+  border: 1px solid #e5e5e5;
+  color: #111111;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-input::placeholder {
+  color: #9ca3af;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: #111111;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.08);
+}
+
+.auth-btn {
+  background: #111111;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.auth-btn:hover {
+  background: #2a2a2a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.auth-btn:active {
+  transform: translateY(0);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #9ca3af;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e5e5;
+}
+
+/* ═══ LOGOUT BUTTON ═══ */
+.btn-logout {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.12);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.btn-logout:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.12);
+}
+
+.btn-logout:active {
+  transform: translateY(0);
 }
 
 /* Glassmorphism card — light mode */
@@ -139,8 +254,8 @@ body {
 }
 
 .slot-filled {
-  background: #fce4ec;
-  border: 1px solid #f48fb1;
+  background: #fde2e2;
+  border: 1px solid #f87171;
   cursor: not-allowed;
 }
 
@@ -187,6 +302,29 @@ body {
 .btn-secondary:hover {
   border-color: #999;
   background: #f5f5f5;
+}
+
+/* ═══ QR CODE STYLES ═══ */
+.qr-container {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border: 1px solid #f0f0f0;
+  position: relative;
+}
+
+.qr-container::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 17px;
+  padding: 1px;
+  background: linear-gradient(135deg, #e5e5e5, #f0f0f0, #e5e5e5);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 
 /* View transition */

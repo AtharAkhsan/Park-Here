@@ -32,10 +32,9 @@ export default function ParkingMapView({
       case "empty":
         return "slot-empty";
       case "filled":
-        return "slot-filled";
       case "reserved":
       case "active":
-        return "slot-reserved";
+        return "slot-filled";
       default:
         return "slot-empty";
     }
@@ -87,8 +86,8 @@ export default function ParkingMapView({
             </div>
           </div>
           <div className="flex items-center gap-2.5 justify-center border-r border-gray-200">
-            <div className="w-8 h-8 rounded-lg bg-pink-50 flex items-center justify-center">
-              <Car size={16} className="text-pink-400" />
+            <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
+              <Car size={16} className="text-red-500" />
             </div>
             <div>
               <p className="text-[11px] text-gray-400 font-medium">Terisi</p>
@@ -140,6 +139,7 @@ export default function ParkingMapView({
                 <div className="grid grid-cols-6 gap-2">
                   {row.map((slot) => {
                     const isSelected = selectedSlotId && slot.id === selectedSlotId;
+                    const isOccupied = slot.status === "filled" || slot.status === "reserved" || slot.status === "active";
                     return (
                     <button
                       key={slot.id}
@@ -151,14 +151,14 @@ export default function ParkingMapView({
                       }`}
                     >
                       <span className={`text-[11px] font-bold ${
-                        (selectedSlotId && slot.id === selectedSlotId) || slot.status === "reserved" || slot.status === "active" ? "text-blue-600"
-                        : slot.status === "filled" ? "text-pink-700"
+                        isSelected ? "text-blue-600"
+                        : isOccupied ? "text-red-600"
                         : "text-gray-500"
                       }`}>
                         {slot.label}
                       </span>
-                      {slot.status === "filled" && <Car size={12} className="text-pink-400 mt-0.5" />}
-                      {((selectedSlotId && slot.id === selectedSlotId) || slot.status === "reserved" || slot.status === "active") && (
+                      {(isOccupied && !isSelected) && <Car size={12} className="text-red-500 mt-0.5" />}
+                      {isSelected && (
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-0.5 animate-pulse" />
                       )}
                     </button>
@@ -177,13 +177,15 @@ export default function ParkingMapView({
                 <span className="text-[10px] text-gray-500 font-semibold">Kosong</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3.5 h-3.5 rounded bg-pink-100 border border-pink-300" />
+                <div className="w-3.5 h-3.5 rounded bg-red-100 border border-red-400" />
                 <span className="text-[10px] text-gray-500 font-semibold">Terisi</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-3.5 h-3.5 rounded bg-blue-100 border border-blue-400" />
-                <span className="text-[10px] text-gray-500 font-semibold">Reservasi</span>
-              </div>
+              {selectedSlotId && (
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3.5 h-3.5 rounded bg-blue-100 border border-blue-400" />
+                  <span className="text-[10px] text-gray-500 font-semibold">Milikmu</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
