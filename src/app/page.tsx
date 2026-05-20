@@ -17,9 +17,16 @@ import ActiveParkingView from "./components/ActiveParkingView";
 import CheckoutView from "./components/CheckoutView";
 import SuccessView from "./components/SuccessView";
 import Image from "next/image";
+import { User } from "@supabase/supabase-js";
 
 export default function Home() {
   // ─── State Machine ───────────────────────────────────
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isRegister, setIsRegister] = useState(false);
   const [currentView, setCurrentView] = useState<AppView>("locations");
   const [parkingSubState, setParkingSubState] =
     useState<ParkingSubState>("navigating");
@@ -79,8 +86,27 @@ export default function Home() {
       setLocations(locationsWithCounts);
       setLocationsLoading(false);
     }
+    async function getSession() {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-    fetchLocations();
+        setUser(session?.user ?? null);
+        setAuthLoading(false);
+      }
+
+      getSession();
+      fetchLocations();
+
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user ?? null);
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
   }, []);
 
   // ─── Fetch Slots for Selected Location ──────────────
@@ -272,6 +298,35 @@ export default function Home() {
   }, []);
 
   // ─── Secondary panel content ──
+  const handleAuth = async () => {
+    if (isRegister) {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      alert("Check your email for verification.");
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
   const renderSecondaryView = () => {
     switch (currentView) {
       case "detail":
@@ -330,6 +385,64 @@ export default function Home() {
     <Image src="/logo.svg" alt="PARK-HERE" width={size} height={size} className="flex-shrink-0" />
   );
 
+  if (authLoading) {
+  return (
+    <main className="min-h-screen flex items-center justify-center">
+      Loading...
+    </main>
+  );
+}
+
+if (!user) {
+  return (
+    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <Logo size={28} />
+          <h1 className="text-xl font-black">PARK-HERE</h1>
+        </div>
+
+        <h2 className="text-lg font-semibold mb-4">
+          {isRegister ? "Create Account" : "Login"}
+        </h2>
+
+        <div className="space-y-3">
+          <input
+            type="email"
+            placeholder="Email"
+            className="w-full border rounded-xl px-4 py-3"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <input
+            type="password"
+            placeholder="Password"
+            className="w-full border rounded-xl px-4 py-3"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <button
+            onClick={handleAuth}
+            className="w-full bg-black text-white rounded-xl py-3 font-medium"
+          >
+            {isRegister ? "Register" : "Login"}
+          </button>
+
+          <button
+            onClick={() => setIsRegister((prev) => !prev)}
+            className="w-full text-sm text-gray-500"
+          >
+            {isRegister
+              ? "Already have an account? Login"
+              : "No account? Register"}
+          </button>
+        </div>
+      </div>
+    </main>
+  );
+}
   // ─── Render ────────────────────────────────────────
   return (
     <>
@@ -343,9 +456,20 @@ export default function Home() {
               PARK-HERE
             </span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-            <span className="text-[10px] font-medium text-gray-400">Online</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+              <span className="text-[10px] font-medium text-gray-400">
+                Online
+              </span>
+            </div>
+
+            <button
+              onClick={handleLogout}
+              className="text-xs text-gray-500 hover:text-black"
+            >
+              Logout
+            </button>
           </div>
         </div>
 
@@ -389,9 +513,20 @@ export default function Home() {
                 PARK-HERE
               </span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              <span className="text-[11px] font-medium text-gray-400">Online</span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                <span className="text-[10px] font-medium text-gray-400">
+                  Online
+                </span>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="text-xs text-gray-500 hover:text-black"
+              >
+                Logout
+              </button>
             </div>
           </div>
 
