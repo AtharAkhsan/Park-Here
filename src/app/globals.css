@@ -37,9 +37,11 @@ body {
 ::-webkit-scrollbar {
   width: 4px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #d4d4d4;
   border-radius: 2px;
@@ -47,50 +49,121 @@ body {
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(40px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes pulse-ring {
-  0% { transform: scale(0.9); opacity: 0.6; }
-  50% { transform: scale(1.1); opacity: 0.3; }
-  100% { transform: scale(0.9); opacity: 0.6; }
+  0% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+
+  50% {
+    transform: scale(1.1);
+    opacity: 0.3;
+  }
+
+  100% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
 }
 
 @keyframes timer-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
 }
 
 @keyframes checkmark {
-  0% { transform: scale(0) rotate(-45deg); opacity: 0; }
-  50% { transform: scale(1.2) rotate(-45deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  0% {
+    transform: scale(0) rotate(-45deg);
+    opacity: 0;
+  }
+
+  50% {
+    transform: scale(1.2) rotate(-45deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
 }
 
 @keyframes glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(0,0,0,0.03); }
-  50% { box-shadow: 0 0 40px rgba(0,0,0,0.06); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.03);
+  }
+
+  50% {
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.06);
+  }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-6px); }
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .animate-fadeIn {
@@ -140,7 +213,7 @@ body {
   background: #ffffff;
   border: 1px solid #e8e8eb;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06),
-              0 1px 2px rgba(0, 0, 0, 0.04);
+    0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .auth-input {
@@ -230,7 +303,7 @@ body {
 .glass-card {
   background: #f5f5f7;
   border: 1px solid #e8e8eb;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .glass-card-light {
@@ -250,7 +323,7 @@ body {
   background: #e4e5e9;
   border-color: #888;
   transform: scale(1.05);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .slot-filled {
@@ -269,7 +342,7 @@ body {
   background: #111111;
   color: #ffffff;
   border: 1px solid #111111;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* Button styles */
@@ -284,7 +357,7 @@ body {
 .btn-primary:hover {
   background: #2a2a2a;
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 .btn-primary:active {
@@ -309,7 +382,7 @@ body {
   background: #ffffff;
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   border: 1px solid #f0f0f0;
   position: relative;
 }
@@ -333,19 +406,42 @@ body {
 }
 
 /* Stagger children */
-.stagger-children > * {
+.stagger-children>* {
   opacity: 0;
   animation: fadeIn 0.4s ease-out forwards;
 }
 
-.stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
-.stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
-.stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
-.stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
-.stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
-.stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
-.stagger-children > *:nth-child(7) { animation-delay: 0.35s; }
-.stagger-children > *:nth-child(8) { animation-delay: 0.4s; }
+.stagger-children>*:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.stagger-children>*:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.stagger-children>*:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+.stagger-children>*:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+.stagger-children>*:nth-child(5) {
+  animation-delay: 0.25s;
+}
+
+.stagger-children>*:nth-child(6) {
+  animation-delay: 0.3s;
+}
+
+.stagger-children>*:nth-child(7) {
+  animation-delay: 0.35s;
+}
+
+.stagger-children>*:nth-child(8) {
+  animation-delay: 0.4s;
+}
 
 /* ── Desktop responsive layout ── */
 @media (min-width: 768px) {
