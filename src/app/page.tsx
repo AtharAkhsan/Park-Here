@@ -92,33 +92,33 @@ export default function Home() {
       setLocationsLoading(false);
     }
     async function getSession() {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        setUser(session?.user ?? null);
-        setAuthLoading(false);
-      }
-
-      getSession();
-      fetchLocations();
-
       const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange((_event, session) => {
-        setUser(session?.user ?? null);
-      });
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      return () => {
-        subscription.unsubscribe();
-      };
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    }
+
+    getSession();
+    fetchLocations();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // ─── Fetch Active Session on Login ──────────────────
   useEffect(() => {
     async function fetchActiveSession() {
       if (!user) return;
-      
+
       const { data, error } = await supabase
         .from("parking_sessions")
         .select("*, parking_slots(*), parking_locations(*)")
@@ -136,10 +136,10 @@ export default function Home() {
       if (data) {
         // Restore Session
         const startTime = new Date(data.start_time);
-        const elapsedSeconds = data.status === "active" 
+        const elapsedSeconds = data.status === "active"
           ? Math.max(0, Math.floor((new Date().getTime() - startTime.getTime()) / 1000))
           : 0;
-        
+
         setSession({
           slotId: data.slot_id,
           slotLabel: data.parking_slots?.label || "",
@@ -149,18 +149,18 @@ export default function Home() {
           endTime: null,
           elapsedSeconds,
         });
-        
+
         // Restore Location context
         if (data.parking_locations) {
           setSelectedLocation(data.parking_locations);
           fetchSlotsForLocation(data.parking_locations.id);
         }
-        
+
         setParkingSubState(data.status === "active" ? "active" : "navigating");
         setCurrentView("parking");
       }
     }
-    
+
     fetchActiveSession();
   }, [user]);
 
@@ -468,147 +468,147 @@ export default function Home() {
   );
 
   if (authLoading) {
-  return (
-    <main className="min-h-screen flex items-center justify-center">
-      Loading...
-    </main>
-  );
-}
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        Loading...
+      </main>
+    );
+  }
 
-if (!user) {
-  return (
-    <main className="min-h-screen w-full flex items-center justify-center auth-background px-4 py-8">
-      <div className="w-full max-w-[420px] relative z-10 animate-scaleIn">
-        {/* Logo area */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center justify-center mb-4 animate-float">
-            <Logo size={36} />
+  if (!user) {
+    return (
+      <main className="min-h-screen w-full flex items-center justify-center auth-background px-4 py-8">
+        <div className="w-full max-w-[420px] relative z-10 animate-scaleIn">
+          {/* Logo area */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center justify-center mb-4 animate-float">
+              <Logo size={36} />
+            </div>
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight">PARK-HERE</h1>
+            <p className="text-gray-400 text-sm mt-1 font-medium">Smart Parking System</p>
           </div>
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight">PARK-HERE</h1>
-          <p className="text-gray-400 text-sm mt-1 font-medium">Smart Parking System</p>
-        </div>
 
-        {/* Auth card */}
-        <div className="auth-card rounded-3xl p-6 sm:p-8 overflow-hidden">
-          <div key={isRegister ? "register" : "login"} className="animate-fadeIn">
-            <h2 className="text-xl font-bold text-gray-900 mb-1">
-              {isRegister ? "Buat Akun Baru" : "Selamat Datang"}
-            </h2>
-            <p className="text-gray-400 text-sm mb-6">
-              {isRegister ? "Daftarkan akunmu untuk mulai parkir" : "Masuk ke akunmu untuk melanjutkan"}
-            </p>
+          {/* Auth card */}
+          <div className="auth-card rounded-3xl p-6 sm:p-8 overflow-hidden">
+            <div key={isRegister ? "register" : "login"} className="animate-fadeIn">
+              <h2 className="text-xl font-bold text-gray-900 mb-1">
+                {isRegister ? "Buat Akun Baru" : "Selamat Datang"}
+              </h2>
+              <p className="text-gray-400 text-sm mb-6">
+                {isRegister ? "Daftarkan akunmu untuk mulai parkir" : "Masuk ke akunmu untuk melanjutkan"}
+              </p>
 
-            {/* Error/Success messages */}
-            {authError && (
-              <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm animate-fadeIn">
-                {authError}
-              </div>
-            )}
-            {authSuccess && (
-              <div className="mb-4 p-3 rounded-xl bg-green-50 border border-green-100 text-green-600 text-sm animate-fadeIn">
-                {authSuccess}
-              </div>
-            )}
+              {/* Error/Success messages */}
+              {authError && (
+                <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm animate-fadeIn">
+                  {authError}
+                </div>
+              )}
+              {authSuccess && (
+                <div className="mb-4 p-3 rounded-xl bg-green-50 border border-green-100 text-green-600 text-sm animate-fadeIn">
+                  {authSuccess}
+                </div>
+              )}
 
-            <div className="space-y-4">
-              <div className="relative">
-                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  id="auth-email"
-                  type="email"
-                  placeholder="Alamat email"
-                  className="w-full auth-input rounded-xl pl-11 pr-4 py-3.5 text-sm"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
-                />
-              </div>
+              <div className="space-y-4">
+                <div className="relative">
+                  <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="auth-email"
+                    type="email"
+                    placeholder="Alamat email"
+                    className="w-full auth-input rounded-xl pl-11 pr-4 py-3.5 text-sm"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
+                  />
+                </div>
 
-              <div className="relative">
-                <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  id="auth-password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Kata sandi"
-                  className="w-full auth-input rounded-xl pl-11 pr-11 py-3.5 text-sm"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
-                />
+                <div className="relative">
+                  <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="auth-password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Kata sandi"
+                    className="w-full auth-input rounded-xl pl-11 pr-11 py-3.5 text-sm"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+
                 <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  tabIndex={-1}
+                  id="btn-auth"
+                  onClick={handleAuth}
+                  disabled={authSubmitting || !email || !password}
+                  className="w-full auth-btn rounded-xl py-3.5 text-[15px] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {authSubmitting ? (
+                    <div className="w-5 h-5 border-2 border-gray-400 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      {isRegister ? <UserPlus size={18} /> : <LogIn size={18} />}
+                      {isRegister ? "Daftar" : "Masuk"}
+                    </>
+                  )}
                 </button>
               </div>
-
-              <button
-                id="btn-auth"
-                onClick={handleAuth}
-                disabled={authSubmitting || !email || !password}
-                className="w-full auth-btn rounded-xl py-3.5 text-[15px] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {authSubmitting ? (
-                  <div className="w-5 h-5 border-2 border-gray-400 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <>
-                    {isRegister ? <UserPlus size={18} /> : <LogIn size={18} />}
-                    {isRegister ? "Daftar" : "Masuk"}
-                  </>
-                )}
-              </button>
             </div>
+
+            <div className="auth-divider my-6">atau</div>
+
+            <button
+              onClick={() => {
+                setIsRegister((prev) => !prev);
+                setAuthError(null);
+                setAuthSuccess(null);
+              }}
+              className="w-full text-sm text-gray-500 hover:text-gray-800 transition-all py-2 group"
+            >
+              {isRegister
+                ? <>Sudah punya akun? <span className="font-bold text-gray-900 inline-block transition-transform duration-200 group-hover:scale-110 group-hover:text-black">Masuk</span></>
+                : <>Belum punya akun? <span className="font-bold text-gray-900 inline-block transition-transform duration-200 group-hover:scale-110 group-hover:text-black">Daftar</span></>}
+            </button>
           </div>
 
-          <div className="auth-divider my-6">atau</div>
+          {/* Demo Credentials */}
+          <div className="mt-5">
+            <p className="text-center text-gray-400 text-[11px] font-medium uppercase tracking-wider mb-2.5">Demo Credentials</p>
+            <button
+              onClick={() => {
+                setEmail("demo@park.here");
+                setPassword("demoparkhere321");
+                setAuthError(null);
+                setAuthSuccess(null);
+              }}
+              className="w-full glass-card rounded-xl p-3.5 flex items-center gap-3 hover:bg-gray-50 transition-all cursor-pointer border border-gray-100"
+            >
+              <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                <Mail size={16} className="text-gray-500" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-bold text-gray-900">Demo</p>
+                <p className="text-xs text-gray-400">demo@park.here</p>
+              </div>
+            </button>
+          </div>
 
-          <button
-            onClick={() => {
-              setIsRegister((prev) => !prev);
-              setAuthError(null);
-              setAuthSuccess(null);
-            }}
-            className="w-full text-sm text-gray-500 hover:text-gray-800 transition-all py-2 group"
-          >
-            {isRegister
-              ? <>Sudah punya akun? <span className="font-bold text-gray-900 inline-block transition-transform duration-200 group-hover:scale-110 group-hover:text-black">Masuk</span></>
-              : <>Belum punya akun? <span className="font-bold text-gray-900 inline-block transition-transform duration-200 group-hover:scale-110 group-hover:text-black">Daftar</span></>}
-          </button>
+          {/* Footer */}
+          <p className="text-center text-gray-300 text-xs mt-6">
+            © 2026 PARK-HERE. All rights reserved.
+          </p>
         </div>
-
-        {/* Demo Credentials */}
-        <div className="mt-5">
-          <p className="text-center text-gray-400 text-[11px] font-medium uppercase tracking-wider mb-2.5">Demo Credentials</p>
-          <button
-            onClick={() => {
-              setEmail("demo@park.here");
-              setPassword("demoparkhere321");
-              setAuthError(null);
-              setAuthSuccess(null);
-            }}
-            className="w-full glass-card rounded-xl p-3.5 flex items-center gap-3 hover:bg-gray-50 transition-all cursor-pointer border border-gray-100"
-          >
-            <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-              <Mail size={16} className="text-gray-500" />
-            </div>
-            <div className="text-left">
-              <p className="text-sm font-bold text-gray-900">Demo</p>
-              <p className="text-xs text-gray-400">demo@park.here</p>
-            </div>
-          </button>
-        </div>
-
-        {/* Footer */}
-        <p className="text-center text-gray-300 text-xs mt-6">
-          © 2026 PARK-HERE. All rights reserved.
-        </p>
-      </div>
-    </main>
-  );
-}
+      </main>
+    );
+  }
   // ─── Render ────────────────────────────────────────
   return (
     <>
