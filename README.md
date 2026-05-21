@@ -54,6 +54,8 @@ PARK-HERE is a modern, web-based application for a smart parking management syst
 ## 📖 Application Flow
 
 1. **Sign In/Register**: Create an account or use Demo Credentials to log in.
+   - **Email:** `demo@park.here`
+   - **Password:** `demoparkhere321`
 2. **Select Location**: Browse the list of parking locations and select one to view its parking map.
 3. **Select a Slot**: Click on an available (Kosong) slot on the map.
 4. **Reserve**: View slot details (including location-specific rates) and click "Reservasi Slot".
